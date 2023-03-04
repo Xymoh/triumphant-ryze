@@ -1,6 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
+// Require the necessary discord.js classes
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const Sequelize = require('sequelize');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -8,6 +10,16 @@ dotenv.config();
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
+
+const sequelize = new Sequelize(process.env.DATABASE_URL);
+
+// Test the connection
+try {
+  sequelize.authenticate();
+  console.log('Connection has been established successfully.');
+} catch (error) {
+  console.error('Unable to connect to the database:', error);
+}
 
 // handling events
 const eventsPath = path.join(__dirname, 'events');
@@ -46,5 +58,33 @@ for (const file of commandFiles) {
     );
   }
 }
+
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const command = interaction.client.commands.get(interaction.commandName);
+
+  if (!command) {
+    console.error(`No command matching ${interaction.commandName} was found.`);
+    return;
+  }
+
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({
+        content: 'There was an error while executing this command!',
+        ephemeral: true,
+      });
+    } else {
+      await interaction.reply({
+        content: 'There was an error while executing this command!',
+        ephemeral: true,
+      });
+    }
+  }
+});
 
 client.login(process.env.DISCORD_TOKEN);
