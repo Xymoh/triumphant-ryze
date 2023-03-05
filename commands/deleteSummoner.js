@@ -1,12 +1,10 @@
 const { SlashCommandBuilder } = require('discord.js');
 const Sequelize = require('sequelize');
 
-const { fetchSummonerId } = require('../utils/fetchRiotApi.js');
-
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('add-summoner')
-    .setDescription('Add a summoner to bot data.')
+    .setName('delete-summoner')
+    .setDescription('Delete a summoner from bot data.')
     .addStringOption((option) =>
       option
         .setName('summoner')
@@ -51,32 +49,24 @@ module.exports = {
         },
       });
 
-      if (summonerExists) {
+      if (!summonerExists) {
         await interaction.reply(
-          `Summoner **${summoner}** already exists in database.`
+          `Summoner **${summoner}** does not exist in database.`
         );
         return;
       }
 
-      // fetch api from riot to get summoner id
-      const summonerId = await fetchSummonerId(region, summoner);
-
-      if (!summonerId) {
-        await interaction.reply(
-          `Summoner **${summoner}** not found on **${region}**.`
-        );
-        return;
-      }
-
-      // add summoner to database
-      await summoners.create({
-        riot_id: summonerId,
-        guild_id: interaction.guild.id,
-        riot_server: region,
-        summoner_name: summoner,
+      await summoners.destroy({
+        where: {
+          guild_id: interaction.guild.id,
+          riot_server: region,
+          summoner_name: summoner,
+        },
       });
 
-      await interaction.reply(`Summoner **${summoner}** added to database.`);
+      await interaction.reply(
+        `Summoner **${summoner}** has been deleted from database.`
+      );
     } catch (error) {
       console.error(error);
     }
