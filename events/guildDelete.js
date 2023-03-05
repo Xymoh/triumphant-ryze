@@ -13,6 +13,7 @@ module.exports = {
 
     const serverConfigs = sequelize.define('server_configs', {
       guild_id: Sequelize.STRING,
+      region: Sequelize.STRING,
       prefix: Sequelize.STRING,
     });
 
