@@ -2,7 +2,11 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Sequelize = require('sequelize');
 
 const { convertRegionShortToOpgg } = require('../utils/convertRegionName.js');
-const { fetchSummonerRanking } = require('../utils/fetchRiotApi.js');
+const {
+  fetchSummonerRanking,
+  fetchSummonerName,
+} = require('../utils/fetchRiotApi.js');
+const { updateSummonerName } = require('../utils/updateSummoner.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -81,6 +85,10 @@ module.exports = {
       let sortedSummoners = [];
       // loop through summoners and fetch their ranking
       for (let i = 0; i < summonersInDatabase.length; i++) {
+        // check if summoner name has changed
+        // if changed, update database
+        updateSummonerName(summonersInDatabase[i]);
+
         const summoner = summonersInDatabase[i];
 
         const summonerRanking = await fetchSummonerRanking(

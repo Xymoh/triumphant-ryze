@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Sequelize = require('sequelize');
 
-const getRegion = require('../utils/getRegion.js');
+const { convertRegionShortToLong } = require('../utils/convertRegionName.js');
+const { updateSummonerName } = require('../utils/updateSummoner.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,7 +39,11 @@ module.exports = {
         embed.setDescription('All summoners in database.');
 
         allSummoners.forEach((summoner) => {
-          const region = getRegion(summoner.riot_server);
+          // check if summoner name has changed
+          // if changed, update database
+          updateSummonerName(summoner);
+
+          const region = convertRegionShortToLong(summoner.riot_server);
           embed.addFields({
             name: summoner.summoner_name,
             value: region,
