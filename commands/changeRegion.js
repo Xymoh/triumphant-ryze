@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const Sequelize = require('sequelize');
 
-const { convertRegionShortName } = require('../utils/convertRegionName.js');
+const { convertRegionShortToLong } = require('../utils/convertRegionName.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -58,7 +58,7 @@ module.exports = {
     }
 
     await interaction.reply(
-      `Region changed to **${convertRegionShortName(
+      `Region changed to **${convertRegionShortToLong(
         interaction.options.getString('region')
       )}**`
     );

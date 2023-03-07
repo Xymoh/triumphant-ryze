@@ -1,6 +1,6 @@
-const convertRegionShortName = (shortName) => {
+const convertRegionShortToLong = (shortRegion) => {
   let regionName = '';
-  switch (shortName) {
+  switch (shortRegion) {
     case 'BR1':
       regionName = 'Brazil';
       break;
@@ -57,6 +57,66 @@ const convertRegionShortName = (shortName) => {
   return regionName;
 };
 
+const convertRegionShortToOpgg = (shortRegion) => {
+  let regionName = '';
+  switch (shortRegion) {
+    case 'BR1':
+      regionName = 'br';
+      break;
+    case 'EUN1':
+      regionName = 'eune';
+      break;
+    case 'EUW1':
+      regionName = 'euw';
+      break;
+    case 'LA1':
+      regionName = 'lan';
+      break;
+    case 'LA2':
+      regionName = 'las';
+      break;
+    case 'NA1':
+      regionName = 'na';
+      break;
+    case 'OC1':
+      regionName = 'oce';
+      break;
+    case 'RU':
+      regionName = 'ru';
+      break;
+    case 'TR1':
+      regionName = 'tr';
+      break;
+    case 'JP1':
+      regionName = 'jp';
+      break;
+    case 'KR':
+      regionName = 'kr';
+      break;
+    case 'PH2':
+      regionName = 'ph';
+      break;
+    case 'SG2':
+      regionName = 'sg';
+      break;
+    case 'TW2':
+      regionName = 'tw';
+      break;
+    case 'TH2':
+      regionName = 'th';
+      break;
+    case 'VN2':
+      regionName = 'vn';
+      break;
+    default:
+      regionName = 'Unknown';
+      break;
+  }
+
+  return regionName;
+};
+
 module.exports = {
-  convertRegionShortName,
+  convertRegionShortToLong,
+  convertRegionShortToOpgg,
 };

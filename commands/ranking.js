@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Sequelize = require('sequelize');
 
+const { convertRegionShortToOpgg } = require('../utils/convertRegionName.js');
 const { fetchSummonerRanking } = require('../utils/fetchRiotApi.js');
 
 module.exports = {
@@ -46,7 +47,22 @@ module.exports = {
 
       const region = serverConfig.region;
 
-      // fetch summoners from database
+      // fetch all summoners from database
+      const allSummonersInDatabase = await summoners.findAll({
+        where: {
+          guild_id: interaction.guild.id,
+        },
+      });
+
+      // if no summoners in database
+      if (allSummonersInDatabase.length === 0) {
+        await interaction.reply(
+          `No summoners in database. Use **/add-summoner <summoner_name>** to add summoners.`
+        );
+        return;
+      }
+
+      // fetch summoners from database with the same region
       const summonersInDatabase = await summoners.findAll({
         where: {
           guild_id: interaction.guild.id,
@@ -54,10 +70,10 @@ module.exports = {
         },
       });
 
-      // if no summoners in database
+      // if no summoners in database with the same region
       if (summonersInDatabase.length === 0) {
         await interaction.reply(
-          `No summoners in database. Use **/add-summoner <summoner_name>** to add summoners.`
+          `No summoners in database with the same region as set on the server. Use **/add-summoner <summoner_name>** to add summoners.`
         );
         return;
       }
@@ -151,37 +167,13 @@ module.exports = {
       // if summoner is 1st, 2nd or 3rd, add a crown emoji
       for (let i = 0; i < sortedSummoners.length; i++) {
         const summoner = sortedSummoners[i];
-        let linkRegion = '';
-        if (region === 'EUW1') {
-          linkRegion = 'euw';
-        } else if (region === 'EUN1') {
-          linkRegion = 'eune';
-        } else if (region === 'NA1') {
-          linkRegion = 'na';
-        } else if (region === 'KR') {
-          linkRegion = 'kr';
-        } else if (region === 'JP1') {
-          linkRegion = 'jp';
-        } else if (region === 'BR1') {
-          linkRegion = 'br';
-        } else if (region === 'OC1') {
-          linkRegion = 'oce';
-        } else if (region === 'TR1') {
-          linkRegion = 'tr';
-        } else if (region === 'RU') {
-          linkRegion = 'ru';
-        } else if (region === 'LA1') {
-          linkRegion = 'lan';
-        } else if (region === 'LA2') {
-          linkRegion = 'las';
-        }
-
+        let linkRegion = convertRegionShortToOpgg(region);
         // encode summoner name to link
         const encodedSummonerName = encodeURIComponent(summoner.summonerName);
-
         // convert summoner name to link using javascript template literals
-        const link = `[${summoner.summonerName}](https://www.op.gg/${linkRegion}/summoners/${encodedSummonerName})`;
+        const link = `[${summoner.summonerName}](https://www.op.gg/summoners/${linkRegion}/${encodedSummonerName})`;
 
+        // First place
         if (i === 0) {
           embed.addFields({
             name: `\u200b`,
@@ -192,6 +184,7 @@ module.exports = {
             }L / WR ${summoner.winRatio}%`,
           });
         }
+        // Second place
         if (i === 1) {
           embed.addFields({
             name: `\u200b`,
@@ -202,6 +195,7 @@ module.exports = {
             }L / WR ${summoner.winRatio}%`,
           });
         }
+        // Third place
         if (i === 2) {
           embed.addFields({
             name: `\u200b`,
@@ -212,27 +206,19 @@ module.exports = {
             }L / WR ${summoner.winRatio}%`,
           });
         }
-        if (i !== sortedSummoners.length - 1) {
-          if (i > 2) {
-            embed.addFields({
-              name: `\u200b`,
-              value: `${i + 1}. **${link}** 🏅 **${summoner.tier} ${
-                summoner.rank
-              } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
-                summoner.losses
-              }L / WR ${summoner.winRatio}%`,
-            });
-          }
-        }
-        if (i === sortedSummoners.length - 1) {
+        // Fourth place and below
+        if (i > 2) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 💩 **${summoner.tier} ${
+            value: `${i + 1}. **${link}** 🏅 **${summoner.tier} ${
               summoner.rank
             } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
               summoner.losses
             }L / WR ${summoner.winRatio}%`,
           });
+        }
+        // add empty field to separate make embed look better
+        if (i === sortedSummoners.length - 1) {
           embed.addFields({
             name: '\u200b',
             value: '\u200b',
