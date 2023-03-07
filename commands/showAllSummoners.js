@@ -27,7 +27,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setTitle('All Summoners')
-        .setColor(0x00ff00);
+        .setColor('#0099ff');
 
       // if no summoners in database
       if (allSummoners.length === 0) {

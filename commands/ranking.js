@@ -80,13 +80,9 @@ module.exports = {
             tier: 'UNRANKED',
             rank: '',
             leaguePoints: 0,
-            wins: summonerRanking[0].wins,
-            losses: summonerRanking[0].losses,
-            winRatio: (
-              (summonerRanking[0].wins /
-                (summonerRanking[0].wins + summonerRanking[0].losses)) *
-              100
-            ).toFixed(0),
+            wins: 0,
+            losses: 0,
+            winRatio: 0,
           });
         } else {
           sortedSummoners.push({
@@ -116,6 +112,7 @@ module.exports = {
         'SILVER',
         'BRONZE',
         'IRON',
+        'UNRANKED',
       ];
       const pos = {};
       for (let i = 0; i < order.length; i++) {
@@ -188,53 +185,53 @@ module.exports = {
         if (i === 0) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 🥇 - **${summoner.tier} ${
+            value: `${i + 1}. **${link}** 🥇 **${summoner.tier} ${
               summoner.rank
             } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
               summoner.losses
-            }L / Win Ratio ${summoner.winRatio}%`,
+            }L / WR ${summoner.winRatio}%`,
           });
         }
         if (i === 1) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 🥈 - **${summoner.tier} ${
+            value: `${i + 1}. **${link}** 🥈 **${summoner.tier} ${
               summoner.rank
             } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
               summoner.losses
-            }L / Win Ratio ${summoner.winRatio}%`,
+            }L / WR ${summoner.winRatio}%`,
           });
         }
         if (i === 2) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 🥉 - **${summoner.tier} ${
+            value: `${i + 1}. **${link}** 🥉 **${summoner.tier} ${
               summoner.rank
             } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
               summoner.losses
-            }L / Win Ratio ${summoner.winRatio}%`,
+            }L / WR ${summoner.winRatio}%`,
           });
         }
         if (i !== sortedSummoners.length - 1) {
           if (i > 2) {
             embed.addFields({
               name: `\u200b`,
-              value: `${i + 1}. **${link}** 🏅 - **${summoner.tier} ${
+              value: `${i + 1}. **${link}** 🏅 **${summoner.tier} ${
                 summoner.rank
               } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
                 summoner.losses
-              }L / Win Ratio ${summoner.winRatio}%`,
+              }L / WR ${summoner.winRatio}%`,
             });
           }
         }
         if (i === sortedSummoners.length - 1) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 💩 - **${summoner.tier} ${
+            value: `${i + 1}. **${link}** 💩 **${summoner.tier} ${
               summoner.rank
             } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
               summoner.losses
-            }L / Win Ratio ${summoner.winRatio}%`,
+            }L / WR ${summoner.winRatio}%`,
           });
           embed.addFields({
             name: '\u200b',
