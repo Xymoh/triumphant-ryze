@@ -1,6 +1,8 @@
 const { SlashCommandBuilder } = require('discord.js');
 const Sequelize = require('sequelize');
 
+const { convertRegionShortToLong } = require('../utils/convertRegionName.js');
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('change-region')
@@ -50,15 +52,15 @@ module.exports = {
         }
       );
 
-      console.log(
-        `Server config updated for guild_id: ${serverConfigs.guild_id} (id: ${serverConfigs.id})`
-      );
+      console.log(`Updated server config: ${configData}`);
     } catch (error) {
       console.error(`Error updating server config: ${error}`);
     }
 
     await interaction.reply(
-      `Region changed to ${interaction.options.getString('region')}`
+      `Region changed to **${convertRegionShortToLong(
+        interaction.options.getString('region')
+      )}**`
     );
   },
 };
