@@ -2,7 +2,11 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Sequelize = require('sequelize');
 
 const { convertRegionShortToOpgg } = require('../utils/convertRegionName.js');
-const { fetchSummonerRanking } = require('../utils/fetchRiotApi.js');
+const {
+  fetchSummonerRanking,
+  fetchSummonerName,
+} = require('../utils/fetchRiotApi.js');
+const { updateSummonerName } = require('../utils/updateSummoner.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -79,8 +83,13 @@ module.exports = {
       }
 
       let sortedSummoners = [];
+      let unrankedSummoners = [];
       // loop through summoners and fetch their ranking
       for (let i = 0; i < summonersInDatabase.length; i++) {
+        // check if summoner name has changed
+        // if changed, update database
+        updateSummonerName(summonersInDatabase[i]);
+
         const summoner = summonersInDatabase[i];
 
         const summonerRanking = await fetchSummonerRanking(
@@ -91,14 +100,9 @@ module.exports = {
 
         // if summonerRanking is empty, push unranked
         if (summonerRanking.length === 0) {
-          sortedSummoners.push({
+          unrankedSummoners.push({
             summonerName: summoner.summoner_name,
             tier: 'UNRANKED',
-            rank: '',
-            leaguePoints: 0,
-            wins: 0,
-            losses: 0,
-            winRatio: 0,
           });
         } else {
           sortedSummoners.push({
@@ -128,7 +132,6 @@ module.exports = {
         'SILVER',
         'BRONZE',
         'IRON',
-        'UNRANKED',
       ];
       const pos = {};
       for (let i = 0; i < order.length; i++) {
@@ -167,6 +170,7 @@ module.exports = {
       // if summoner is 1st, 2nd or 3rd, add a crown emoji
       for (let i = 0; i < sortedSummoners.length; i++) {
         const summoner = sortedSummoners[i];
+        // convert region to op.gg link
         let linkRegion = convertRegionShortToOpgg(region);
         // encode summoner name to link
         const encodedSummonerName = encodeURIComponent(summoner.summonerName);
@@ -210,18 +214,18 @@ module.exports = {
         if (i > 2) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 🏅 **${summoner.tier} ${
-              summoner.rank
-            } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
-              summoner.losses
-            }L / WR ${summoner.winRatio}%`,
+            value: `${i + 1}. **${link}** **${summoner.tier} ${summoner.rank} ${
+              summoner.leaguePoints
+            } LP** - ${summoner.wins}W ${summoner.losses}L / WR ${
+              summoner.winRatio
+            }%`,
           });
         }
         // add empty field to separate make embed look better
-        if (i === sortedSummoners.length - 1) {
+        if (i === sortedSummoners.length - 1 && unrankedSummoners.length > 0) {
           embed.addFields({
-            name: '\u200b',
-            value: '\u200b',
+            name: `\u200b`,
+            value: `There are **${unrankedSummoners.length}** unranked players on this server.`,
           });
         }
       }

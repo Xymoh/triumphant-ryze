@@ -3,6 +3,7 @@ const axios = require('axios');
 
 dotenv.config();
 
+// by summoner name
 const fetchSummonerId = async (region, summonerName) => {
   try {
     const response = await axios.get(
@@ -15,6 +16,20 @@ const fetchSummonerId = async (region, summonerName) => {
   }
 };
 
+// by encrypted summoner id
+const fetchSummonerName = async (region, summonerId) => {
+  try {
+    const response = await axios.get(
+      `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/${summonerId}?api_key=${process.env.API_KEY}`
+    );
+    const data = response.data;
+    return data.name;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+// by encrypted summoner id
 const fetchSummonerRanking = async (region, summonerId, ranked) => {
   try {
     const response = await axios.get(
@@ -43,5 +58,6 @@ const fetchSummonerRanking = async (region, summonerId, ranked) => {
 
 module.exports = {
   fetchSummonerId,
+  fetchSummonerName,
   fetchSummonerRanking,
 };

@@ -1,119 +1,79 @@
 const convertRegionShortToLong = (shortRegion) => {
-  let regionName = '';
   switch (shortRegion) {
     case 'BR1':
-      regionName = 'Brazil';
-      break;
+      return 'Brazil';
     case 'EUN1':
-      regionName = 'Europe Nordic & East';
-      break;
+      return 'Europe Nordic & East';
     case 'EUW1':
-      regionName = 'Europe West';
-      break;
+      return 'Europe West';
     case 'LA1':
-      regionName = 'Latin America North';
-      break;
+      return 'Latin America North';
     case 'LA2':
-      regionName = 'Latin America South';
-      break;
+      return 'Latin America South';
     case 'NA1':
-      regionName = 'North America';
-      break;
+      return 'North America';
     case 'OC1':
-      regionName = 'Oceania';
-      break;
+      return 'Oceania';
     case 'RU':
-      regionName = 'Russia';
-      break;
+      return 'Russia';
     case 'TR1':
-      regionName = 'Turkey';
-      break;
+      return 'Turkey';
     case 'JP1':
-      regionName = 'Japan';
-      break;
+      return 'Japan';
     case 'KR':
-      regionName = 'Republic of Korea';
-      break;
+      return 'Republic of Korea';
     case 'PH2':
-      regionName = 'The Philippines';
-      break;
+      return 'The Philippines';
     case 'SG2':
-      regionName = 'Singapore, Malaysia, & Indonesia';
-      break;
+      return 'Singapore, Malaysia, & Indonesia';
     case 'TW2':
-      regionName = 'Taiwan, Hong Kong, and Macao';
-      break;
+      return 'Taiwan, Hong Kong, and Macao';
     case 'TH2':
-      regionName = 'Thailand';
-      break;
+      return 'Thailand';
     case 'VN2':
-      regionName = 'Vietnam';
-      break;
+      return 'Vietnam';
     default:
-      regionName = 'Unknown';
-      break;
+      return 'Unknown';
   }
-
-  return regionName;
 };
 
 const convertRegionShortToOpgg = (shortRegion) => {
-  let regionName = '';
   switch (shortRegion) {
     case 'BR1':
-      regionName = 'br';
-      break;
+      return 'br';
     case 'EUN1':
-      regionName = 'eune';
-      break;
+      return 'eune';
     case 'EUW1':
-      regionName = 'euw';
-      break;
+      return 'euw';
     case 'LA1':
-      regionName = 'lan';
-      break;
+      return 'lan';
     case 'LA2':
-      regionName = 'las';
-      break;
+      return 'las';
     case 'NA1':
-      regionName = 'na';
-      break;
+      return 'na';
     case 'OC1':
-      regionName = 'oce';
-      break;
+      return 'oce';
     case 'RU':
-      regionName = 'ru';
-      break;
+      return 'ru';
     case 'TR1':
-      regionName = 'tr';
-      break;
+      return 'tr';
     case 'JP1':
-      regionName = 'jp';
-      break;
+      return 'jp';
     case 'KR':
-      regionName = 'kr';
-      break;
+      return 'kr';
     case 'PH2':
-      regionName = 'ph';
-      break;
+      return 'ph';
     case 'SG2':
-      regionName = 'sg';
-      break;
+      return 'sg';
     case 'TW2':
-      regionName = 'tw';
-      break;
+      return 'tw';
     case 'TH2':
-      regionName = 'th';
-      break;
+      return 'th';
     case 'VN2':
-      regionName = 'vn';
-      break;
+      return 'vn';
     default:
-      regionName = 'Unknown';
-      break;
+      return 'Unknown';
   }
-
-  return regionName;
 };
 
 module.exports = {
