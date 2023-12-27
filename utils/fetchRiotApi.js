@@ -3,22 +3,58 @@ const axios = require('axios');
 
 dotenv.config();
 
-const fetchSummonerId = async (region, summonerName) => {
+const regionMapping = {
+  BR1: 'americas',
+  EUN1: 'europe',
+  EUW1: 'europe',
+  LA1: 'americas',
+  LA2: 'americas',
+  NA1: 'americas',
+  OC1: 'americas',
+  RU: 'europe',
+  TR1: 'europe',
+  JP1: 'asia',
+  KR: 'asia',
+  PH2: 'asia',
+  SG2: 'asia',
+  TW2: 'asia',
+  TH2: 'asia',
+  VN2: 'asia',
+};
+
+const fetchPUUID = async (region, summonerName, tagLine) => {
   try {
+    const mappedRegion = regionMapping[region];
     const response = await axios.get(
-      `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${summonerName}?api_key=${process.env.API_KEY}`
+      `https://${mappedRegion}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${summonerName}/${tagLine}`,
+      { headers: { 'X-Riot-Token': process.env.API_KEY } }
     );
     const data = response.data;
-    return data.id;
+    return data.puuid;
   } catch (error) {
     console.error(error);
   }
 };
 
-const fetchSummonerRanking = async (region, summonerId, ranked) => {
+const fetchSummonerByPUUID = async (region, puuid) => {
   try {
     const response = await axios.get(
-      `https://${region}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}?api_key=${process.env.API_KEY}`
+      `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`,
+      { headers: { 'X-Riot-Token': process.env.API_KEY } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+const fetchSummonerRanking = async (region, summonerId, ranked) => {
+  try {
+    console.log(`fetchSummonerRanking: ${region} ${summonerId} ${ranked}`);
+    const response = await axios.get(
+      `https://${region}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`,
+      { headers: { 'X-Riot-Token': process.env.API_KEY } }
     );
     const data = response.data;
     let ranking = [];
@@ -42,6 +78,7 @@ const fetchSummonerRanking = async (region, summonerId, ranked) => {
 };
 
 module.exports = {
-  fetchSummonerId,
+  fetchPUUID,
+  fetchSummonerByPUUID,
   fetchSummonerRanking,
 };

@@ -1,6 +1,8 @@
 const { Events } = require('discord.js');
 const Sequelize = require('sequelize');
 
+const { connectToDB, sequelize } = require('../utils/dbConnect.js');
+
 module.exports = {
   name: Events.GuildCreate,
   once: false,
@@ -9,19 +11,29 @@ module.exports = {
       `Joined a new guild: ${guild.name} (id: ${guild.id}). This guild has ${guild.memberCount} members!`
     );
 
-    const sequelize = new Sequelize(process.env.DATABASE_URL);
+    connectToDB();
 
-    const serverConfigs = sequelize.define('server_configs', {
-      guild_id: Sequelize.STRING,
-      region: Sequelize.STRING,
-      prefix: Sequelize.STRING,
-    });
+    const serverConfigs = sequelize.define(
+      'server_configs',
+      {
+        id: {
+          type: Sequelize.INTEGER,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        guild_id: Sequelize.STRING,
+        region: Sequelize.STRING,
+      },
+      {
+        timestamps: false,
+        freezeTableName: true,
+      }
+    );
 
     try {
       const configData = await serverConfigs.create({
         guild_id: guild.id,
         region: 'EUN1',
-        prefix: '/',
       });
 
       console.log(

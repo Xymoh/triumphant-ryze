@@ -2,8 +2,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 // Require the necessary discord.js classes
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const Sequelize = require('sequelize');
 const dotenv = require('dotenv');
+
+const { connectToDB } = require('./utils/dbConnect.js');
 
 dotenv.config();
 
@@ -11,21 +12,11 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
 
-const sequelize = new Sequelize(process.env.DATABASE_URL);
-
-// Test the connection
-try {
-  sequelize.authenticate();
-  console.log('Connection has been established successfully.');
-} catch (error) {
-  console.error('Unable to connect to the database:', error);
-}
+connectToDB();
 
 // handling events
 const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs
-  .readdirSync(eventsPath)
-  .filter((file) => file.endsWith('.js'));
+const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
 
 for (const file of eventFiles) {
   const filePath = path.join(eventsPath, file);
@@ -42,9 +33,7 @@ client.commands = new Collection();
 
 // handling commands
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs
-  .readdirSync(commandsPath)
-  .filter((file) => file.endsWith('.js'));
+const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
 
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);

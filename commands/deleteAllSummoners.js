@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
-const Sequelize = require('sequelize');
+
+const { getServerConfig, summoners } = require('../utils/dbFunctions.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -7,29 +8,7 @@ module.exports = {
     .setDescription('Delete all summoners from bot data.'),
   async execute(interaction) {
     try {
-      const sequelize = new Sequelize(process.env.DATABASE_URL);
-
-      // summoners table
-      const summoners = sequelize.define('summoners', {
-        riot_id: Sequelize.STRING,
-        guild_id: Sequelize.STRING,
-        riot_server: Sequelize.STRING,
-        summoner_name: Sequelize.STRING,
-      });
-
-      // fetch region from database
-      const serverConfigs = sequelize.define('server_configs', {
-        guild_id: Sequelize.STRING,
-        region: Sequelize.STRING,
-        prefix: Sequelize.STRING,
-      });
-
-      const serverConfig = await serverConfigs.findOne({
-        where: {
-          guild_id: interaction.guild.id,
-        },
-      });
-
+      const serverConfig = await getServerConfig(interaction.guild.id);
       const region = serverConfig.region;
 
       await summoners.destroy({
@@ -44,9 +23,7 @@ module.exports = {
       );
     } catch (error) {
       console.error(error);
-      await interaction.reply(
-        'There was an error trying to delete all summoners from database.'
-      );
+      await interaction.reply('There was an error trying to delete all summoners from database.');
     }
   },
 };
