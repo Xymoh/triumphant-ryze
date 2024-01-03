@@ -1,8 +1,12 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const Sequelize = require('sequelize');
 
 const { convertRegionShortToOpgg } = require('../utils/convertRegionName.js');
 const { fetchSummonerRanking } = require('../utils/fetchRiotApi.js');
+const {
+  summoners,
+  getServerConfig,
+  getAllSummonersInDatabase,
+} = require('../utils/dbFunctions.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,46 +17,16 @@ module.exports = {
         .setName('ranked')
         .setDescription('Show ranked or flex ranking.')
         .setRequired(true)
-        .addChoices(
-          { name: 'Solo/Duo', value: 'solo_duo' },
-          { name: 'Flex', value: 'flex' }
-        )
+        .addChoices({ name: 'Solo/Duo', value: 'solo_duo' }, { name: 'Flex', value: 'flex' })
     ),
   async execute(interaction) {
     try {
       const ranked = interaction.options.getString('ranked');
-
-      const sequelize = new Sequelize(process.env.DATABASE_URL);
-
-      // summoners table
-      const summoners = sequelize.define('summoners', {
-        riot_id: Sequelize.STRING,
-        guild_id: Sequelize.STRING,
-        riot_server: Sequelize.STRING,
-        summoner_name: Sequelize.STRING,
-      });
-
-      // fetch region from database
-      const serverConfigs = sequelize.define('server_configs', {
-        guild_id: Sequelize.STRING,
-        region: Sequelize.STRING,
-        prefix: Sequelize.STRING,
-      });
-
-      const serverConfig = await serverConfigs.findOne({
-        where: {
-          guild_id: interaction.guild.id,
-        },
-      });
-
+      const serverConfig = await getServerConfig(interaction.guild.id);
       const region = serverConfig.region;
 
       // fetch all summoners from database
-      const allSummonersInDatabase = await summoners.findAll({
-        where: {
-          guild_id: interaction.guild.id,
-        },
-      });
+      const allSummonersInDatabase = await getAllSummonersInDatabase(interaction.guild.id);
 
       // if no summoners in database
       if (allSummonersInDatabase.length === 0) {
@@ -83,11 +57,9 @@ module.exports = {
       for (let i = 0; i < summonersInDatabase.length; i++) {
         const summoner = summonersInDatabase[i];
 
-        const summonerRanking = await fetchSummonerRanking(
-          region,
-          summoner.riot_id,
-          ranked
-        );
+        console.log('summoners', summoner.summoner_id);
+
+        const summonerRanking = await fetchSummonerRanking(region, summoner.summoner_id, ranked);
 
         // if summonerRanking is empty, push unranked
         if (summonerRanking.length === 0) {
@@ -99,6 +71,7 @@ module.exports = {
             wins: 0,
             losses: 0,
             winRatio: 0,
+            tagLine: summoner.tag_line,
           });
         } else {
           sortedSummoners.push({
@@ -108,9 +81,9 @@ module.exports = {
             leaguePoints: summonerRanking[0].leaguePoints,
             wins: summonerRanking[0].wins,
             losses: summonerRanking[0].losses,
+            tagLine: summoner.tag_line,
             winRatio: (
-              (summonerRanking[0].wins /
-                (summonerRanking[0].wins + summonerRanking[0].losses)) *
+              (summonerRanking[0].wins / (summonerRanking[0].wins + summonerRanking[0].losses)) *
               100
             ).toFixed(0),
           });
@@ -153,7 +126,7 @@ module.exports = {
       // create embed
       const embed = new EmbedBuilder()
         .setTitle(`Ranking for **${interaction.guild.name}**`)
-        .setColor('#0099ff')
+        .setColor('#C4A15B')
         .setTimestamp()
         .setFooter({
           text: `Requested by ${interaction.user.username}`,
@@ -169,7 +142,9 @@ module.exports = {
         const summoner = sortedSummoners[i];
         let linkRegion = convertRegionShortToOpgg(region);
         // encode summoner name to link
-        const encodedSummonerName = encodeURIComponent(summoner.summonerName);
+        const encodedSummonerName = encodeURIComponent(
+          `${summoner.summonerName}-${summoner.tagLine}`
+        );
         // convert summoner name to link using javascript template literals
         const link = `[${summoner.summonerName}](https://www.op.gg/summoners/${linkRegion}/${encodedSummonerName})`;
 
@@ -177,44 +152,36 @@ module.exports = {
         if (i === 0) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 🥇 **${summoner.tier} ${
-              summoner.rank
-            } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
-              summoner.losses
-            }L / WR ${summoner.winRatio}%`,
+            value: `${i + 1}. **${link}** 🥇 **${summoner.tier} ${summoner.rank} ${
+              summoner.leaguePoints
+            } LP** - ${summoner.wins}W ${summoner.losses}L / WR ${summoner.winRatio}%`,
           });
         }
         // Second place
         if (i === 1) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 🥈 **${summoner.tier} ${
-              summoner.rank
-            } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
-              summoner.losses
-            }L / WR ${summoner.winRatio}%`,
+            value: `${i + 1}. **${link}** 🥈 **${summoner.tier} ${summoner.rank} ${
+              summoner.leaguePoints
+            } LP** - ${summoner.wins}W ${summoner.losses}L / WR ${summoner.winRatio}%`,
           });
         }
         // Third place
         if (i === 2) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 🥉 **${summoner.tier} ${
-              summoner.rank
-            } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
-              summoner.losses
-            }L / WR ${summoner.winRatio}%`,
+            value: `${i + 1}. **${link}** 🥉 **${summoner.tier} ${summoner.rank} ${
+              summoner.leaguePoints
+            } LP** - ${summoner.wins}W ${summoner.losses}L / WR ${summoner.winRatio}%`,
           });
         }
         // Fourth place and below
         if (i > 2) {
           embed.addFields({
             name: `\u200b`,
-            value: `${i + 1}. **${link}** 🏅 **${summoner.tier} ${
-              summoner.rank
-            } ${summoner.leaguePoints} LP** - ${summoner.wins}W ${
-              summoner.losses
-            }L / WR ${summoner.winRatio}%`,
+            value: `${i + 1}. **${link}** 🏅 **${summoner.tier} ${summoner.rank} ${
+              summoner.leaguePoints
+            } LP** - ${summoner.wins}W ${summoner.losses}L / WR ${summoner.winRatio}%`,
           });
         }
         // add empty field to separate make embed look better
