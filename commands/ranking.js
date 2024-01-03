@@ -71,6 +71,7 @@ module.exports = {
             wins: 0,
             losses: 0,
             winRatio: 0,
+            tagLine: summoner.tag_line,
           });
         } else {
           sortedSummoners.push({
@@ -80,6 +81,7 @@ module.exports = {
             leaguePoints: summonerRanking[0].leaguePoints,
             wins: summonerRanking[0].wins,
             losses: summonerRanking[0].losses,
+            tagLine: summoner.tag_line,
             winRatio: (
               (summonerRanking[0].wins / (summonerRanking[0].wins + summonerRanking[0].losses)) *
               100
@@ -124,7 +126,7 @@ module.exports = {
       // create embed
       const embed = new EmbedBuilder()
         .setTitle(`Ranking for **${interaction.guild.name}**`)
-        .setColor('#0099ff')
+        .setColor('#C4A15B')
         .setTimestamp()
         .setFooter({
           text: `Requested by ${interaction.user.username}`,
