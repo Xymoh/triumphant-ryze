@@ -1,0 +1,29 @@
+# Runs the bot together with Postgres: `docker compose up -d`
+# Register slash commands once with: docker compose run --rm bot node deploy-commands.js
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://ryze:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/triumphant_ryze
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ryze
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: triumphant_ryze
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ryze -d triumphant_ryze']
+      interval: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

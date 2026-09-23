@@ -1,51 +1,52 @@
-const fs = require('node:fs');
-const path = require('node:path');
-// Require the necessary discord.js classes
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const dotenv = require('dotenv');
+const { ActivityType, Client, Collection, GatewayIntentBits } = require('discord.js');
 
-const { connectToDB } = require('./utils/dbConnect.js');
+const config = require('./config.js');
+const { initDatabase, closeDatabase } = require('./utils/db.js');
+const { loadModules, loadCommands } = require('./utils/loadModules.js');
 
-dotenv.config();
+const main = async () => {
+  if (!config.discordToken) {
+    throw new Error('DISCORD_TOKEN is not set. Copy .env.example to .env and fill it in.');
+  }
+  if (!config.riotApiKey) {
+    console.warn('[startup] RIOT_API_KEY is not set, so every Riot lookup will fail.');
+  }
 
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  await initDatabase();
+  console.log(`[db] Ready (${config.databaseUrl ? 'postgres' : `sqlite: ${config.sqlitePath}`})`);
+
+  // Slash commands only need the Guilds intent; no message content or member data is read.
+  const client = new Client({
+    intents: [GatewayIntentBits.Guilds],
+    presence: {
+      activities: [{ name: 'status', type: ActivityType.Custom, state: '🏆 /ranking · /help' }],
+    },
+  });
+
+  client.commands = new Collection(loadCommands().map((command) => [command.data.name, command]));
+
+  for (const { module: event } of loadModules('events')) {
+    const listener = (...args) =>
+      Promise.resolve()
+        .then(() => event.execute(...args))
+        .catch((error) => console.error(`[event] ${event.name} handler failed:`, error));
+    client[event.once ? 'once' : 'on'](event.name, listener);
+  }
+
+  const shutdown = async (signal) => {
+    console.log(`[shutdown] Received ${signal}, closing connections...`);
+    await client.destroy();
+    await closeDatabase();
+    process.exit(0);
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
+  process.on('unhandledRejection', (error) => console.error('[unhandledRejection]', error));
+
+  await client.login(config.discordToken);
+};
+
+main().catch((error) => {
+  console.error('[startup] Failed to start the bot:', error);
+  process.exit(1);
 });
-
-connectToDB();
-
-// handling events
-const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
-
-for (const file of eventFiles) {
-  const filePath = path.join(eventsPath, file);
-  const event = require(filePath);
-
-  if (event.once) {
-    client.once(event.name, (...args) => event.execute(...args));
-  } else {
-    client.on(event.name, (...args) => event.execute(...args));
-  }
-}
-
-client.commands = new Collection();
-
-// handling commands
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
-
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
-  // Set a new item in the Collection with the key as the command name and the value as the exported module
-  if ('data' in command && 'execute' in command) {
-    client.commands.set(command.data.name, command);
-  } else {
-    console.log(
-      `[WARNING] The command at ${filePath} does not have a required "data" or "execute" property.`
-    );
-  }
-}
-
-client.login(process.env.DISCORD_TOKEN);
