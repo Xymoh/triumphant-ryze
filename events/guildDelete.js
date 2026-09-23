@@ -1,25 +1,15 @@
 const { Events } = require('discord.js');
 
-const { serverConfigs } = require('../utils/dbFunctions');
+const { deleteGuildData } = require('../utils/db.js');
 
+// Only fires when the bot is kicked or the server is deleted (outages emit guildUnavailable), so
+// it's safe to remove that server's data here.
 module.exports = {
   name: Events.GuildDelete,
-  once: false,
   async execute(guild) {
+    const removedPlayers = await deleteGuildData(guild.id);
     console.log(
-      `Left a guild: ${guild.name} (id: ${guild.id}). This guild had ${guild.memberCount} members!`
+      `[guilds] Left ${guild.name} (${guild.id}); removed its settings and ${removedPlayers} tracked players`
     );
-
-    try {
-      await serverConfigs.destroy({
-        where: {
-          guild_id: guild.id,
-        },
-      });
-
-      console.log(`Server config deleted: ${guild.id}`);
-    } catch (error) {
-      console.error(`Error deleting server config: ${error}`);
-    }
   },
 };
